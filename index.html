@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f5f2e8;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+          font-family: Helvetica, sans-serif;
+          font-weight: 500;
+          color: rgb(26, 23, 23);
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 20px;
+          font-size: 30px;
+          margin-bottom: 30px;
+          text-align: center;
+          letter-spacing: 1px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .shuffle-btn {
+            background-color: #a58e64;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .shuffle-btn:hover {
+            background-color: #8c7654;
+        }
+
+        .shuffle-btn:active {
+            transform: scale(0.98);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-auto-rows: 10px;
+            grid-gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .image-container {
+            grid-row-end: span 30; /* Default height */
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #e8e2d3;
+            padding: 8px;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: sepia(20%);
+            transition: all 0.3s ease;
+        }
+
+        .image-container:nth-child(3n+1) {
+            grid-row-end: span 45; /* Taller images */
+        }
+
+        .image-container:nth-child(5n+2) {
+            grid-row-end: span 35; /* Medium height images */
+        }
+
+        .image-container:nth-child(2n) {
+            grid-column-end: span 1; /* Single column width */
+        }
+
+        .image-container:nth-child(5n) {
+            grid-column-end: span 2; /* Double column width for some images */
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .image-container:hover .overlay {
+            opacity: 1;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.1);
+            filter: sepia(50%) blur(2px);
+        }
+
+        .overlay h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .overlay p {
+            font-size: 14px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease 0.1s;
+        }
+
+        .image-container:hover .overlay h3,
+        .image-container:hover .overlay p {
+            transform: translateY(0);
+        }
+
+        /* Tabs styling */
+        .tabs-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tabs-nav {
+            display: flex;
+            background-color: #e8e2d3;
+            border-bottom: 2px solid #a58e64;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #444;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            background-color: rgba(165, 142, 100, 0.2);
+        }
+
+        .tab-btn.active {
+            color: #a58e64;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #a58e64;
+        }
+
+        .tab-content {
+            padding: 25px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Accordion styling */
+        .accordion-container {
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+
+        .accordion-item {
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            padding: 15px 20px;
+            background-color: #e8e2d3;
+            color: #444;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background-color: rgba(165, 142, 100, 0.2);
+        }
+
+        .accordion-header h3 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .accordion-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-icon::before,
+        .accordion-icon::after {
+            content: '';
+            position: absolute;
+            background-color: #444;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-icon::before {
+            width: 100%;
+            height: 2px;
+            top: 9px;
+        }
+
+        .accordion-icon::after {
+            width: 2px;
+            height: 100%;
+            left: 9px;
+        }
+
+        .accordion-item.active .accordion-icon::after {
+            opacity: 0;
+        }
+
+        .accordion-item.active .accordion-header {
+            background-color: rgba(165, 142, 100, 0.3);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion-inner {
+            padding: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+
+        form input,
+        form select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        form input:focus,
+        form select:focus {
+            outline: none;
+            border-color: #a58e64;
+            box-shadow: 0 0 0 3px rgba(165, 142, 100, 0.2);
+        }
+
+        form button {
+            background-color: #a58e64;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        form button:hover {
+            background-color: #8c7654;
+        }
+
+        /* Status message */
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: rgba(165, 142, 100, 0.9);
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <h1>Images Gallery With a Touch of Ambience and Color</h1>
+
+    <!-- Tabs section -->
+    <div class="tabs-container">
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="gallery">Gallery</button>
+            <button class="tab-btn" data-tab="about">About</button>
+            <button class="tab-btn" data-tab="contact">Contact</button>
+        </div>
+
+        <div id="gallery" class="tab-content active">
+            <div class="controls">
+                <button class="shuffle-btn">Shuffle Images</button>
+            </div>
+
+            <div class="gallery">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://www.w3schools.com/w3images/underwater.jpg" alt="Image 1">
+                        <div class="overlay">
+                            <h3>Underwater Beauty</h3>
+                            <p>Exploring the magical world beneath the waves</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/2176593/pexels-photo-2176593.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 2">
+                        <div class="overlay">
+                            <h3>Mountain Peaks</h3>
+                            <p>Majestic heights and breathtaking views</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/2239485/pexels-photo-2239485.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 3">
+                        <div class="overlay">
+                            <h3>Urban Exploration</h3>
+                            <p>Discovering hidden corners of the city</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://www.w3schools.com/w3images/paris.jpg" alt="Image 4">
+                        <div class="overlay">
+                            <h3>Paris Lights</h3>
+                            <p>The city of love illuminated at night</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/31870297/pexels-photo-31870297/free-photo-of-black-dog-standing-on-a-country-road-in-thailand.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 5">
+                        <div class="overlay">
+                            <h3>Faithful Companion</h3>
+                            <p>A dog's journey on a country road</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/31870329/pexels-photo-31870329/free-photo-of-vibrant-marigold-focused-against-dark-background.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 6">
+                        <div class="overlay">
+                            <h3>Vibrant Marigold</h3>
+                            <p>Nature's colorful display against darkness</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1563356/pexels-photo-1563356.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 7">
+                        <div class="overlay">
+                            <h3>Serene Landscape</h3>
+                            <p>Finding peace in natural beauty</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1323550/pexels-photo-1323550.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 8">
+                        <div class="overlay">
+                            <h3>Abstract Patterns</h3>
+                            <p>Finding art in unexpected places</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/848573/pexels-photo-848573.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 9">
+                        <div class="overlay">
+                            <h3>Coastal Wonders</h3>
+                            <p>Where land meets the endless ocean</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1955134/pexels-photo-1955134.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 10">
+                        <div class="overlay">
+                            <h3>Architectural Marvels</h3>
+                            <p>Human ingenuity set in stone</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1906794/pexels-photo-1906794.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 11">
+                        <div class="overlay">
+                            <h3>Urban Skyline</h3>
+                            <p>The pulse of the modern city</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1740103/pexels-photo-1740103.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 12">
+                        <div class="overlay">
+                            <h3>Peaceful Moments</h3>
+                            <p>Finding tranquility in a busy world</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1591382/pexels-photo-1591382.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 13">
+                        <div class="overlay">
+                            <h3>Natural Wonders</h3>
+                            <p>Earth's most breathtaking creations</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1595655/pexels-photo-1595655.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 14">
+                        <div class="overlay">
+                            <h3>Vintage Charm</h3>
+                            <p>Nostalgia captured in time</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="https://images.pexels.com/photos/1583582/pexels-photo-1583582.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Image 15">
+                        <div class="overlay">
+                            <h3>Dramatic Landscapes</h3>
+                            <p>Nature's most impressive vistas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="about" class="tab-content">
+            <h2>About Our Gallery</h2>
+            <p>Welcome to our curated collection of stunning imagery from around the world. Our gallery showcases a diverse range of photographs that capture the beauty of nature, urban landscapes, and quiet moments of reflection.</p>
+            <p>Each image in our collection has been carefully selected to evoke emotion and inspire curiosity. We believe in the power of visual storytelling and the ability of photography to transport us to different places and perspectives.</p>
+
+            <!-- Accordion inside About tab -->
+            <div class="accordion-container">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Our Mission</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <p>Our mission is to showcase the beauty that exists in both extraordinary and ordinary moments. We believe that through photography, we can inspire appreciation for the world around us and encourage a deeper connection with our environment.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Our Photographers</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <p>Our collection features work from both established and emerging photographers from around the globe. We take pride in supporting artists who capture unique perspectives and share their vision with the world.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <h3>Exhibition History</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <p>Since our founding in 2018, we've hosted twelve physical exhibitions and numerous virtual showcases. Our work has been featured in publications worldwide and has attracted visitors from over 50 countries.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="contact" class="tab-content">
+            <h2>Contact Us</h2>
+            <p>We'd love to hear from you! Whether you're interested in submitting your own work, purchasing prints, or just want to say hello, please fill out the form below.</p>
+
+            <form id="contact-form">
+                <!-- Name field -->
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+
+                <!-- Email field -->
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+                <!-- Subject field (new) -->
+                <label for="subject">Subject:</label>
+                <select id="subject" name="subject" required>
+                    <option value="" disabled selected>Select a subject</option>
+                    <option value="general">General Inquiry</option>
+                    <option value="submission">Photo Submission</option>
+                    <option value="purchase">Print Purchase</option>
+                    <option value="feedback">Feedback</option>
+                </select>
+
+                <!-- Message field (new) -->
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="5" placeholder="Your message" required></textarea>
+                <style>
+                    textarea {
+                        width: 100%;
+                        padding: 12px;
+                        margin-bottom: 20px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: inherit;
+                        font-size: 16px;
+                        resize: vertical;
+                        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+                    }
+
+                    textarea:focus {
+                        outline: none;
+                        border-color: #a58e64;
+                        box-shadow: 0 0 0 3px rgba(165, 142, 100, 0.2);
+                    }
+                </style>
+
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="status-message" id="status-message"></div>
+
+<script type="module" src="index.js" defer></script>
+</body>
+</html>
